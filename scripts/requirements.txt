@@ -1,4 +1,5 @@
-FinanceDataReader
+pandas
+finance-datareader
 requests
 beautifulsoup4
 openai

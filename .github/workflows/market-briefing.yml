@@ -26,9 +26,12 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: 'scripts/requirements.txt'
 
       - name: 📦 Install dependencies
-        run: pip install -r scripts/requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r scripts/requirements.txt
 
       - name: 🚀 Run market briefing
         run: python scripts/web.py
