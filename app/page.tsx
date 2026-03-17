@@ -1,5 +1,5 @@
 import { AdSense } from '@/components/AdSense';
-import { ArrowRight, BarChart3, TrendingUp, Activity } from 'lucide-react';
+import { ArrowRight, BarChart3, TrendingUp, Activity, LineChart } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
@@ -73,6 +73,23 @@ export default function Home() {
           </div>
           <div className="mt-6 flex items-center text-sm font-medium text-amber-500">
             리포트 보기 <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </div>
+        </Link>
+
+        {/* Simulation Card */}
+        <Link href="/simulation" className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/50 p-6 transition-all hover:border-amber-500/50 hover:bg-zinc-900">
+          <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl transition-all group-hover:bg-amber-500/20" />
+          <div>
+            <div className="mb-4 inline-flex rounded-lg bg-white/5 p-3 text-amber-500 ring-1 ring-white/10">
+              <LineChart className="h-6 w-6" />
+            </div>
+            <h2 className="text-xl font-semibold text-white">시뮬레이션</h2>
+            <p className="mt-2 text-sm text-zinc-400">
+              트레이딩 패턴별 백테스트 결과를 차트와 통계로 시각화합니다.
+            </p>
+          </div>
+          <div className="mt-6 flex items-center text-sm font-medium text-amber-500">
+            결과 보기 <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>
         </Link>
       </div>

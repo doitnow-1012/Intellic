@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>증권사 리포트 1페이지 뷰어</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0f;
+      color: #e0e0e0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      color: #f5a623;
+      margin-bottom: 16px;
+    }
+    .meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .meta span {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    .meta .highlight {
+      color: #f5a623;
+      font-weight: 700;
+    }
+    #pdf-canvas {
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      max-width: 100%;
+    }
+    .loading {
+      color: #888;
+      font-size: 1rem;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📄 하나증권 — 삼성전자 리포트 (2026.03.13)</h1>
+  <div class="meta">
+    <span>증권사: <b>하나증권</b></span>
+    <span>투자의견: <b class="highlight">Buy</b></span>
+    <span>목표주가: <b class="highlight">300,000원</b></span>
+    <span>이전 목표주가: 187,900원</span>
+    <span>조회수: 12,904</span>
+  </div>
+  <div id="container">
+    <p class="loading" id="status">PDF 1페이지 로딩 중...</p>
+    <canvas id="pdf-canvas"></canvas>
+  </div>
+
+  <script type="module">
+    const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+    const pdfUrl = 'https://stock.pstatic.net/stock-research/company/57/20260313_company_646345000.pdf';
+
+    try {
+      const loadingTask = pdfjsLib.getDocument(pdfUrl);
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+
+      const scale = 2.0;
+      const viewport = page.getViewport({ scale });
+      const canvas = document.getElementById('pdf-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      canvas.style.width = Math.min(viewport.width / scale, 800) + 'px';
+
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      document.getElementById('status').style.display = 'none';
+    } catch (e) {
+      document.getElementById('status').textContent = 'PDF 로딩 실패: ' + e.message;
+    }
+  </script>
+</body>
+</html>

@@ -23,7 +23,7 @@ interface StockReportResult {
   overallSummary: string;
 }
 
-export default function StockAnalysisPage() {
+export default function StockReportPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
@@ -41,7 +41,7 @@ export default function StockAnalysisPage() {
     setStatus('종목 정보 확인 중...');
 
     try {
-      setStatus('증권사 리포트 수집 및 PDF 1페이지 추출 중...');
+      setStatus('증권사 리포트 수집 중...');
 
       const res = await fetch('/api/stock-report', {
         method: 'POST',
@@ -56,7 +56,7 @@ export default function StockAnalysisPage() {
         return;
       }
 
-      setStatus('AI 종합 분석 완료!');
+      setStatus('AI 요약 생성 완료!');
       setResult(data);
     } catch (e) {
       setError('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
@@ -88,16 +88,14 @@ export default function StockAnalysisPage() {
       <header className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="inline-flex rounded-lg bg-amber-500/10 p-2 text-amber-500 ring-1 ring-amber-500/20">
-            <TrendingUp className="h-6 w-6" />
+            <FileText className="h-6 w-6" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            종목분석
+            증권사 리포트 요약
           </h1>
         </div>
         <p className="max-w-2xl text-lg text-zinc-400">
-          종목명을 입력하면 최신 증권사 리포트를 자동 수집하고, 이를 바탕으로 AI가 분석합니다.
-          <br />
-          최신 증권사 리포트가 없으면, AI가 최신 뉴스와 컨센서스를 바탕으로 분석합니다.
+          종목명을 입력하면 이번 달 증권사 리서치 리포트를 자동으로 수집하고 AI가 핵심 내용을 요약합니다.
         </p>
       </header>
 
@@ -128,7 +126,7 @@ export default function StockAnalysisPage() {
           ) : (
             <>
               <Search className="h-5 w-5" />
-              분석
+              검색
             </>
           )}
         </button>
@@ -167,37 +165,11 @@ export default function StockAnalysisPage() {
             </span>
           </div>
 
-          {/* AI Overall Summary — 먼저 표시 */}
-          {result.overallSummary && (
-            <div className="rounded-2xl border border-white/10 bg-zinc-900/50 p-6 md:p-8 shadow-xl">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="inline-flex rounded-lg bg-emerald-500/10 p-2 text-emerald-500 ring-1 ring-emerald-500/20">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <h3 className="text-xl font-bold text-white">AI 종합 분석</h3>
-                <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
-                  Gemini AI
-                </span>
-              </div>
-
-              <div className="h-px w-full bg-white/10 mb-6" />
-
-              <div className="prose prose-invert prose-zinc max-w-none prose-a:text-amber-500 hover:prose-a:text-amber-400 prose-table:border-white/10 prose-th:bg-white/5 prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-white/10 prose-headings:text-white prose-strong:text-white">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {result.overallSummary}
-                </ReactMarkdown>
-              </div>
-            </div>
-          )}
-
           {/* Reports Table */}
           {result.reports.length > 0 ? (
             <div className="rounded-xl border border-white/10 bg-zinc-900/30 overflow-hidden">
-              <div className="px-4 py-3 border-b border-white/10 bg-white/5">
-                <h3 className="text-sm font-semibold text-zinc-300">📋 개별 리포트 상세</h3>
-              </div>
               {/* Table Header */}
-              <div className="hidden sm:grid sm:grid-cols-[1fr_120px_100px_120px_80px_40px] items-center gap-2 border-b border-white/10 bg-white/[0.02] px-4 py-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
+              <div className="hidden sm:grid sm:grid-cols-[1fr_120px_100px_120px_80px_40px] items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
                 <span>제목</span>
                 <span>증권사</span>
                 <span>날짜</span>
@@ -256,13 +228,9 @@ export default function StockAnalysisPage() {
                       </div>
                     </div>
 
-                    {/* Expanded Detail — PDF 1페이지 전체 텍스트 */}
+                    {/* Expanded Detail */}
                     {expandedIdx === idx && report.summary && (
                       <div className="border-t border-white/5 bg-zinc-900/80 px-6 py-4">
-                        <div className="mb-2 flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-zinc-500" />
-                          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">PDF 1페이지 추출 내용</span>
-                        </div>
                         <p className="text-sm leading-relaxed text-zinc-400 whitespace-pre-wrap">
                           {report.summary}
                         </p>
@@ -281,9 +249,32 @@ export default function StockAnalysisPage() {
             </div>
           )}
 
+          {/* AI Overall Summary */}
+          {result.overallSummary && (
+            <div className="rounded-2xl border border-white/10 bg-zinc-900/50 p-6 md:p-8 shadow-xl">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="inline-flex rounded-lg bg-emerald-500/10 p-2 text-emerald-500 ring-1 ring-emerald-500/20">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <h3 className="text-xl font-bold text-white">AI 종합 분석</h3>
+                <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/20">
+                  Gemini AI
+                </span>
+              </div>
+
+              <div className="h-px w-full bg-white/10 mb-6" />
+
+              <div className="prose prose-invert prose-zinc max-w-none prose-a:text-amber-500 hover:prose-a:text-amber-400 prose-table:border-white/10 prose-th:bg-white/5 prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-white/10 prose-headings:text-white prose-strong:text-white">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {result.overallSummary}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )}
+
           {/* Disclaimer */}
           <div className="rounded-lg border border-white/5 bg-zinc-900/20 p-4 text-xs text-zinc-600">
-            ⚠️ 본 분석은 AI가 네이버 증권 리서치 리포트 PDF를 기반으로 자동 생성한 참고 자료입니다.
+            ⚠️ 본 요약은 AI가 네이버 증권 리서치 리포트를 기반으로 자동 생성한 참고 자료입니다.
             투자 결정은 본인의 판단과 책임하에 이루어져야 합니다.
             원본 리포트 확인을 위해 각 리포트의 외부 링크를 참조해주세요.
           </div>

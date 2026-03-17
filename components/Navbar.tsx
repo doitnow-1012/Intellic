@@ -11,6 +11,7 @@ const navItems = [
   { name: '시장분석', href: '/market-analysis' },
   { name: '특징주분석', href: '/featured-stocks' },
   { name: '종목분석', href: '/stock-analysis' },
+  { name: '시뮬레이션', href: '/simulation' },
 ];
 
 export function Navbar() {
