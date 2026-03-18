@@ -221,11 +221,16 @@ export default function MarketAnalysisPage() {
               
               <div className="h-px w-full bg-white/10 mb-8" />
               
-              <div className="prose prose-invert prose-zinc max-w-none prose-a:text-amber-500 hover:prose-a:text-amber-400 prose-table:border-white/10 prose-th:bg-white/5 prose-th:p-3 prose-td:p-3 prose-td:border-t prose-td:border-white/10">
+              <div className="prose prose-invert prose-zinc max-w-none prose-a:text-amber-500 hover:prose-a:text-amber-400 prose-table:border-white/10 prose-th:bg-white/5 prose-th:px-2 prose-th:py-2 sm:prose-th:px-3 sm:prose-th:py-3 prose-td:px-2 prose-td:py-2 sm:prose-td:px-3 sm:prose-td:py-3 prose-td:border-t prose-td:border-white/10 prose-th:text-xs sm:prose-th:text-sm prose-td:text-xs sm:prose-td:text-sm">
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
                     a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" {...props} />,
+                    table: ({node, ...props}) => (
+                      <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+                        <table className="min-w-[500px] w-full" {...props} />
+                      </div>
+                    ),
                     // 테이블 내 테마명 클릭 가능하게 처리
                     td: ({node, children, ...props}) => {
                       // children에서 텍스트 추출

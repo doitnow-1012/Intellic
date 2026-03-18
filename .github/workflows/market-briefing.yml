@@ -2,9 +2,10 @@ name: 📊 Market Briefing Auto-Post
 
 on:
   schedule:
-    # KST 08:00~15:00 = UTC 23:00(전일)~06:00, 월~금
-    - cron: '0 23 * * 0'    # KST 월 08:00 (UTC 일 23:00)
-    - cron: '0 0-6 * * 1-5' # KST 09:00~15:00 (UTC 00:00~06:00)
+    # KST 08:00~16:00 (1시간 간격, 월~금)
+    # KST 08:00 = UTC 전일 23:00 → 일~목 실행 (결과적으로 월~금 아침)
+    - cron: '0 23 * * 0-4'   # KST 월~금 08:00 (UTC 일~목 23:00)
+    - cron: '0 0-7 * * 1-5'  # KST 월~금 09:00~16:00 (UTC 00:00~07:00)
   workflow_dispatch: # 수동 실행 가능
 
 jobs:
