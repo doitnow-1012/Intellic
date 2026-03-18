@@ -19,6 +19,7 @@ import json
 import sys
 import io
 import os
+import math
 from datetime import datetime, timedelta
 
 # ── OpenAI ChatGPT 설정 ──
@@ -74,11 +75,24 @@ def get_market_indices() -> Dict[str, Any]:
                 indices[name] = {"close": None, "change": None, "change_pct": None}
                 continue
 
+            # NaN 행 제거 후 처리
+            df = df.dropna(subset=["Close"])
+            if df.empty:
+                indices[name] = {"close": None, "change": None, "change_pct": None}
+                continue
+
             close = float(df.iloc[-1]["Close"])
+            if math.isnan(close):
+                indices[name] = {"close": None, "change": None, "change_pct": None}
+                continue
+
             if len(df) >= 2:
                 prev = float(df.iloc[-2]["Close"])
-                change = round(close - prev, 2)
-                change_pct = round((close - prev) / prev * 100, 2)
+                if math.isnan(prev) or prev == 0:
+                    change, change_pct = 0, 0
+                else:
+                    change = round(close - prev, 2)
+                    change_pct = round((close - prev) / prev * 100, 2)
             else:
                 change, change_pct = 0, 0
 
@@ -884,8 +898,8 @@ def format_markdown(
             arrow = "⚪"
 
         close_str = f"{close:,.2f}"
-        change_str = f"{change:+,.2f}" if change is not None else "-"
-        pct_str = f"{pct:+.2f}%" if pct is not None else "-"
+        change_str = f"{change:+,.2f}" if (change is not None and not math.isnan(change)) else "-"
+        pct_str = f"{pct:+.2f}%" if (pct is not None and not math.isnan(pct)) else "-"
 
         lines.append(f"| {arrow} **{name}** | {close_str} | {change_str} | {pct_str} |")
 
