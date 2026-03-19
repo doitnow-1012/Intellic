@@ -2,17 +2,15 @@ name: 📊 Market Briefing Auto-Post
 
 on:
   schedule:
-    # ── 정시 실행 (KST 08:00~17:00, 월~금) ──
-    - cron: '0 23 * * 0-4'    # KST 월~금 08:00 (UTC 일~목 23:00)
-    - cron: '0 0-8 * * 1-5'   # KST 월~금 09:00~17:00 (UTC 월~금 00:00~08:00)
-    # ── 백업 실행 (정시 누락 대비, 30분 오프셋) ──
-    - cron: '30 23 * * 0-4'   # KST 월~금 08:30 백업
-    - cron: '30 0-8 * * 1-5'  # KST 월~금 09:30~17:30 백업
+    # 매일 KST 07:55 (UTC 전일 22:55) 에 한번만 트리거
+    # 워크플로우 내부에서 KST 08:00~17:00 루프 실행
+    - cron: '55 22 * * 0-4'   # 월~금 (UTC 기준 일~목)
   workflow_dispatch: # 수동 실행 가능
 
 jobs:
   briefing:
     runs-on: ubuntu-latest
+    timeout-minutes: 600  # 최대 10시간 (08~17시 커버)
     env:
       TZ: Asia/Seoul
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -35,5 +33,56 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r scripts/requirements.txt
 
-      - name: 🚀 Run market briefing
-        run: python scripts/web.py
+      - name: 🚀 Run hourly market briefing loop
+        run: |
+          echo "🕐 시장 브리핑 루프 시작 (KST 08:00~17:00)"
+
+          # 현재 KST 시각 확인
+          CURRENT_HOUR=$(TZ=Asia/Seoul date +%H)
+          echo "현재 KST 시각: ${CURRENT_HOUR}시"
+
+          # KST 08:00 이전이면 08:00까지 대기
+          while [ $(TZ=Asia/Seoul date +%H) -lt 8 ]; do
+            echo "⏳ 08:00 대기 중... (현재: $(TZ=Asia/Seoul date +%H:%M KST))"
+            sleep 60
+          done
+
+          # KST 08:00~17:00 매시간 실행 루프
+          while [ $(TZ=Asia/Seoul date +%H) -le 17 ]; do
+            HOUR=$(TZ=Asia/Seoul date +%H)
+            MINUTE=$(TZ=Asia/Seoul date +%M)
+            echo ""
+            echo "═══════════════════════════════════════"
+            echo "📊 ${HOUR}:${MINUTE} KST — 브리핑 실행"
+            echo "═══════════════════════════════════════"
+
+            python scripts/web.py || echo "⚠️ 스크립트 실행 실패, 다음 시간에 재시도"
+
+            echo ""
+            echo "✅ ${HOUR}:${MINUTE} 완료. 다음 실행까지 대기..."
+
+            # 17시 이후면 루프 종료
+            if [ $(TZ=Asia/Seoul date +%H) -ge 17 ]; then
+              echo "🏁 17시 이후 — 오늘 브리핑 종료"
+              break
+            fi
+
+            # 다음 정시까지 대기 (대략 55분)
+            # 현재 분(minute)을 기준으로 다음 정시까지 남은 초 계산
+            MINS_LEFT=$(( 60 - $(TZ=Asia/Seoul date +%M) ))
+            SECS_LEFT=$(( MINS_LEFT * 60 ))
+
+            # 최소 30분, 최대 65분 대기
+            if [ $SECS_LEFT -lt 1800 ]; then
+              SECS_LEFT=1800
+            fi
+            if [ $SECS_LEFT -gt 3900 ]; then
+              SECS_LEFT=3900
+            fi
+
+            echo "⏳ ${MINS_LEFT}분 (${SECS_LEFT}초) 대기 후 다음 실행..."
+            sleep $SECS_LEFT
+          done
+
+          echo ""
+          echo "🏁 시장 브리핑 루프 완료!"
