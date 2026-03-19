@@ -58,6 +58,7 @@ def get_market_indices() -> Dict[str, Any]:
     import FinanceDataReader as fdr
 
     start = (datetime.now() - timedelta(days=10)).strftime("%Y-%m-%d")
+    today_str = datetime.now().strftime("%Y-%m-%d")
     indices = {}
 
     symbols = {
@@ -75,8 +76,11 @@ def get_market_indices() -> Dict[str, Any]:
                 indices[name] = {"close": None, "change": None, "change_pct": None}
                 continue
 
-            # NaN 행 제거 후 처리
+            # FDR 장중 중복 행 처리: 같은 날짜에 NaN행 + 실제가 행이 2개 올 수 있음
+            # 1) NaN 행 제거
             df = df.dropna(subset=["Close"])
+            # 2) 같은 날짜 중복 시 마지막(최신) 행만 유지
+            df = df[~df.index.duplicated(keep='last')]
             if df.empty:
                 indices[name] = {"close": None, "change": None, "change_pct": None}
                 continue
@@ -85,6 +89,9 @@ def get_market_indices() -> Dict[str, Any]:
             if math.isnan(close):
                 indices[name] = {"close": None, "change": None, "change_pct": None}
                 continue
+
+            latest_date = df.index[-1].strftime("%Y-%m-%d")
+            is_today = (latest_date == today_str)
 
             if len(df) >= 2:
                 prev = float(df.iloc[-2]["Close"])
@@ -100,7 +107,8 @@ def get_market_indices() -> Dict[str, Any]:
                 "close": round(close, 2),
                 "change": change,
                 "change_pct": change_pct,
-                "date": df.index[-1].strftime("%Y-%m-%d"),
+                "date": latest_date,
+                "is_realtime": is_today,  # True = 장중 실시간, False = 전일 종가
             }
         except Exception as e:
             indices[name] = {"close": None, "change": None, "error": str(e)[:60]}
@@ -872,6 +880,12 @@ def format_markdown(
 
     lines.append(f"# 📊 한국 주식시장 브리핑 — {now.strftime('%Y년 %m월 %d일 (%a)')}\n")
     lines.append(f"> 생성 시각: {now.strftime('%H:%M KST')}\n")
+
+    # 장 전(09:00 이전) 데이터 안내
+    kospi_data = indices.get("KOSPI", {})
+    if not kospi_data.get("is_realtime", True) and now.hour < 9:
+        lines.append("> ⚠️ 장 개장 전 생성 — 지수는 **전일 종가** 기준입니다.\n")
+
     lines.append("---\n")
 
     # ── 시장 지수 ──
@@ -1060,6 +1074,40 @@ def run_briefing(output_json: bool = False) -> str:
         return format_markdown(indices, themes, analysis, news, news_signals, detailed_analysis)
 
 
+def check_duplicate_post() -> bool:
+    """최근 40분 내 이미 포스팅된 브리핑이 있는지 확인한다.
+    이중 cron(정시 + 30분 백업)으로 인한 중복 발행 방지.
+    Returns: True면 중복 → 스킵해야 함.
+    """
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return False
+
+    import requests as req
+
+    cutoff = (datetime.now() - timedelta(minutes=40)).isoformat()
+    url = (
+        f"{SUPABASE_URL}/rest/v1/market_posts"
+        f"?created_at=gte.{cutoff}"
+        f"&select=id,created_at"
+        f"&limit=1"
+    )
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+    }
+    try:
+        res = req.get(url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            data = res.json()
+            if data:
+                print(f"⏭️ 최근 40분 내 포스트 발견 (ID: {data[0]['id']}) → 중복 발행 스킵", flush=True)
+                return True
+        return False
+    except Exception as e:
+        print(f"⚠️ 중복 체크 실패 (계속 진행): {e}", flush=True)
+        return False
+
+
 def publish_to_supabase(title: str, content: str) -> dict:
     """생성된 브리핑을 Supabase market_posts 테이블에 저장한다 (REST API 방식)."""
     import requests as req
@@ -1095,6 +1143,13 @@ def publish_to_supabase(title: str, content: str) -> dict:
 if __name__ == "__main__":
     output_json = "--json" in sys.argv
     no_publish = "--no-publish" in sys.argv
+
+    # ── 중복 발행 체크 (정시+30분 이중 cron 보호) ──
+    if not no_publish and not output_json:
+        if check_duplicate_post():
+            print("✅ 이미 최근 발행된 브리핑이 있습니다. 정상 종료합니다.")
+            sys.exit(0)
+
     result = run_briefing(output_json=output_json)
     print("\n" + "=" * 60)
     print(result)

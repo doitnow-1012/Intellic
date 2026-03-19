@@ -2,16 +2,17 @@ name: 📊 Market Briefing Auto-Post
 
 on:
   schedule:
-    # KST 08:00~16:00 (1시간 간격, 월~금)
-    # KST 08:00 = UTC 전일 23:00 → 일~목 실행 (결과적으로 월~금 아침)
-    - cron: '0 23 * * 0-4'   # KST 월~금 08:00 (UTC 일~목 23:00)
-    - cron: '0 0-7 * * 1-5'  # KST 월~금 09:00~16:00 (UTC 00:00~07:00)
+    # ── 정시 실행 (KST 08:00~17:00, 월~금) ──
+    - cron: '0 23 * * 0-4'    # KST 월~금 08:00 (UTC 일~목 23:00)
+    - cron: '0 0-8 * * 1-5'   # KST 월~금 09:00~17:00 (UTC 월~금 00:00~08:00)
+    # ── 백업 실행 (정시 누락 대비, 30분 오프셋) ──
+    - cron: '30 23 * * 0-4'   # KST 월~금 08:30 백업
+    - cron: '30 0-8 * * 1-5'  # KST 월~금 09:30~17:30 백업
   workflow_dispatch: # 수동 실행 가능
 
 jobs:
   briefing:
     runs-on: ubuntu-latest
-    # 한국 시간대 설정
     env:
       TZ: Asia/Seoul
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
