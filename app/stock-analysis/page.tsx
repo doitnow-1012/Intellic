@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Search, FileText, Loader2, AlertCircle, ExternalLink, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
+import { AdSense } from '@/components/AdSense';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -133,6 +134,9 @@ export default function StockAnalysisPage() {
           )}
         </button>
       </div>
+
+      {/* AdSense Display Ad */}
+      <AdSense slot="4126889793" format="auto" />
 
       {/* Loading Status */}
       {loading && (
