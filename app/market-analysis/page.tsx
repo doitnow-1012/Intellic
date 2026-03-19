@@ -227,7 +227,7 @@ export default function MarketAnalysisPage() {
                 const parts: string[] = [];
                 const adPositions = new Set<number>(); // 광고 삽입할 인덱스
 
-                const sectionMarkers = ['## 📈 시장 지수 현황', '## 🔍 종합 관전 포인트'];
+                const sectionMarkers = ['## 📈 시장 지수 현황', '## 🔑 뉴스에서 읽는 핵심 시그널'];
                 let remaining = rawContent;
 
                 for (const marker of sectionMarkers) {
