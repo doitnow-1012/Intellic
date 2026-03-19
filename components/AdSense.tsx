@@ -11,15 +11,14 @@ interface AdSenseProps {
 
 export function AdSense({
   className = '',
-  slot = '',
+  slot = '4126889793',
   format = 'auto',
   responsive = true,
 }: AdSenseProps) {
-  const adRef = useRef<HTMLDivElement>(null);
+  const adRef = useRef<HTMLModElement>(null);
   const isAdPushed = useRef(false);
 
   useEffect(() => {
-    // AdSense 광고 초기화 (중복 push 방지)
     if (adRef.current && !isAdPushed.current) {
       try {
         const adsbygoogle = (window as any).adsbygoogle || [];
@@ -32,47 +31,19 @@ export function AdSense({
   }, []);
 
   return (
-    <div className={`my-8 flex w-full flex-col items-center justify-center overflow-hidden ${className}`}>
+    <div className={`my-6 w-full overflow-hidden ${className}`}>
       <ins
+        ref={adRef}
         className="adsbygoogle"
-        style={{ display: 'block' }}
+        style={{
+          display: 'block',
+          width: '100%',
+          minHeight: '100px',
+        }}
         data-ad-client="ca-pub-1491652914340377"
         data-ad-slot={slot}
         data-ad-format={format}
         data-full-width-responsive={responsive ? 'true' : 'false'}
-      />
-    </div>
-  );
-}
-
-/**
- * 인피드 광고 (리스트 사이에 삽입)
- */
-export function AdSenseInFeed({ className = '', slot = '' }: { className?: string; slot?: string }) {
-  const adRef = useRef<HTMLDivElement>(null);
-  const isAdPushed = useRef(false);
-
-  useEffect(() => {
-    if (adRef.current && !isAdPushed.current) {
-      try {
-        const adsbygoogle = (window as any).adsbygoogle || [];
-        adsbygoogle.push({});
-        isAdPushed.current = true;
-      } catch (err) {
-        console.error('AdSense InFeed error:', err);
-      }
-    }
-  }, []);
-
-  return (
-    <div ref={adRef} className={`my-4 ${className}`}>
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block' }}
-        data-ad-client="ca-pub-1491652914340377"
-        data-ad-slot={slot}
-        data-ad-format="fluid"
-        data-ad-layout-key="-fb+5w+4e-db+86"
       />
     </div>
   );
