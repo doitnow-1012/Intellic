@@ -19,15 +19,36 @@ export function AdSense({
   const isAdPushed = useRef(false);
 
   useEffect(() => {
-    if (adRef.current && !isAdPushed.current) {
+    if (!adRef.current || isAdPushed.current) return;
+
+    const tryPushAd = () => {
       try {
-        const adsbygoogle = (window as any).adsbygoogle || [];
-        adsbygoogle.push({});
-        isAdPushed.current = true;
+        const adsbygoogle = (window as any).adsbygoogle;
+        if (adsbygoogle) {
+          adsbygoogle.push({});
+          isAdPushed.current = true;
+          return true;
+        }
       } catch (err) {
-        console.error('AdSense error:', err);
+        console.error('AdSense push error:', err);
       }
-    }
+      return false;
+    };
+
+    // 즉시 시도
+    if (tryPushAd()) return;
+
+    // 스크립트 로드 대기 (최대 10초, 500ms 간격)
+    let attempts = 0;
+    const maxAttempts = 20;
+    const interval = setInterval(() => {
+      attempts++;
+      if (tryPushAd() || attempts >= maxAttempts) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
