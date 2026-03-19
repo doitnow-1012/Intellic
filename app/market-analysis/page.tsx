@@ -221,21 +221,34 @@ export default function MarketAnalysisPage() {
               
               <div className="h-px w-full bg-white/10 mb-8" />
               
-              <div className="prose prose-invert prose-zinc max-w-none prose-a:text-amber-500 hover:prose-a:text-amber-400 prose-table:border-white/10 prose-th:bg-white/5 prose-th:px-2 prose-th:py-2 sm:prose-th:px-3 sm:prose-th:py-3 prose-td:px-2 prose-td:py-2 sm:prose-td:px-3 sm:prose-td:py-3 prose-td:border-t prose-td:border-white/10 prose-th:text-xs sm:prose-th:text-sm prose-td:text-xs sm:prose-td:text-sm">
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" {...props} />,
-                    table: ({node, ...props}) => (
+              {(() => {
+                const rawContent = selectedReport.content.replace(/<!-- THEME_STOCKS_DATA:[\s\S]*? -->/g, '');
+                // 시장지수현황, 종합관전포인트 기준으로 콘텐츠 분할
+                const parts: string[] = [];
+                const adPositions = new Set<number>(); // 광고 삽입할 인덱스
+
+                const sectionMarkers = ['## 📈 시장 지수 현황', '## 🔍 종합 관전 포인트'];
+                let remaining = rawContent;
+
+                for (const marker of sectionMarkers) {
+                  const idx = remaining.indexOf(marker);
+                  if (idx > 0) {
+                    parts.push(remaining.slice(0, idx));
+                    adPositions.add(parts.length); // 이 위치에 광고 삽입
+                    remaining = remaining.slice(idx);
+                  }
+                }
+                parts.push(remaining);
+
+                const markdownComponents = {
+                    a: ({node, ...props}: any) => <a target="_blank" rel="noopener noreferrer" {...props} />,
+                    table: ({node, ...props}: any) => (
                       <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
                         <table className="min-w-[500px] w-full" {...props} />
                       </div>
                     ),
-                    // 테이블 내 테마명 클릭 가능하게 처리
-                    td: ({node, children, ...props}) => {
-                      // children에서 텍스트 추출
+                    td: ({node, children, ...props}: any) => {
                       const text = extractText(children);
-                      // 볼드 텍스트면 테마명일 가능성 확인
                       if (text && themeStocksMap[text]) {
                         return (
                           <td {...props}>
@@ -251,7 +264,7 @@ export default function MarketAnalysisPage() {
                       }
                       return <td {...props}>{children}</td>;
                     },
-                    strong: ({node, children, ...props}) => {
+                    strong: ({node, children, ...props}: any) => {
                       const text = extractText(children);
                       if (text && themeStocksMap[text]) {
                         return (
@@ -267,11 +280,26 @@ export default function MarketAnalysisPage() {
                       }
                       return <strong {...props}>{children}</strong>;
                     }
-                  }}
-                >
-                  {selectedReport.content.replace(/<!-- THEME_STOCKS_DATA:[\s\S]*? -->/g, '')}
-                </ReactMarkdown>
-              </div>
+                  };
+
+                return parts.map((part, i) => (
+                  <div key={i}>
+                    {adPositions.has(i) && (
+                      <div className="my-6">
+                        <AdSense slot="4126889793" format="auto" />
+                      </div>
+                    )}
+                    <div className="prose prose-invert prose-zinc max-w-none prose-a:text-amber-500 hover:prose-a:text-amber-400 prose-table:border-white/10 prose-th:bg-white/5 prose-th:px-2 prose-th:py-2 sm:prose-th:px-3 sm:prose-th:py-3 prose-td:px-2 prose-td:py-2 sm:prose-td:px-3 sm:prose-td:py-3 prose-td:border-t prose-td:border-white/10 prose-th:text-xs sm:prose-th:text-sm prose-td:text-xs sm:prose-td:text-sm">
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                        components={markdownComponents}
+                      >
+                        {part}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           )}
         </>
