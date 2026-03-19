@@ -25,6 +25,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
+        {/* Google Analytics 4 */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-P34W0KRLC2"
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-P34W0KRLC2');
+          `}
+        </Script>
         <Navbar />
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           {children}
