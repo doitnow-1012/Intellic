@@ -1,8 +1,32 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { AdSense } from '@/components/AdSense';
-import { ArrowRight, BarChart3, TrendingUp, Activity, LineChart } from 'lucide-react';
+import { ArrowRight, BarChart3, TrendingUp, Newspaper, LineChart } from 'lucide-react';
 import Link from 'next/link';
 
+interface RecentColumn {
+  id: string;
+  title: string;
+  category: string;
+  slug: string;
+  created_at: string;
+}
+
 export default function Home() {
+  const [recentColumns, setRecentColumns] = useState<RecentColumn[]>([]);
+
+  useEffect(() => {
+    fetch('/api/columns')
+      .then(res => res.json())
+      .then(data => setRecentColumns(data.slice(0, 5)))
+      .catch(console.error);
+  }, []);
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  };
   return (
     <div className="space-y-12">
       <header className="space-y-4">
@@ -47,15 +71,15 @@ export default function Home() {
           <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl transition-all group-hover:bg-amber-500/20" />
           <div>
             <div className="mb-4 inline-flex rounded-lg bg-white/5 p-3 text-amber-500 ring-1 ring-white/10">
-              <Activity className="h-6 w-6" />
+              <Newspaper className="h-6 w-6" />
             </div>
-            <h2 className="text-xl font-semibold text-white">특징주분석</h2>
+            <h2 className="text-xl font-semibold text-white">경제칼럼</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              당일 거래량 급증, 주요 공시 등 시장의 주목을 받은 특징적인 종목들을 분석합니다.
+              Gemini Deep Research 기반 AI가 분석한 경제·산업 심층 칼럼을 제공합니다.
             </p>
           </div>
           <div className="mt-6 flex items-center text-sm font-medium text-amber-500">
-            분석 보기 <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            칼럼 보기 <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>
         </Link>
 
@@ -96,42 +120,45 @@ export default function Home() {
 
       <AdSense />
 
-      {/* Recent Reports Section (Mockup) */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">최신 분석 리포트</h2>
-          <Link href="/market-analysis" className="text-sm font-medium text-amber-500 hover:text-amber-400">
-            전체보기
-          </Link>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-zinc-900/30 overflow-hidden">
-          <div className="divide-y divide-white/5">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between p-4 transition-colors hover:bg-white/5 sm:p-6">
-                <div className="flex items-center gap-4">
-                  <div className="hidden h-12 w-12 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-400 sm:flex">
-                    {i}0월
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500">
-                        {i === 1 ? '시장분석' : i === 2 ? '특징주' : '종목분석'}
-                      </span>
-                      <span className="text-xs text-zinc-500">2023.10.{20 - i}</span>
-                    </div>
-                    <h3 className="mt-1 font-medium text-white">
-                      {i === 1 ? 'FOMC 금리 동결 이후의 시장 방향성 점검' : i === 2 ? '초전도체 관련주 급등락 원인 분석' : '삼성전자 3분기 실적 리뷰 및 향후 전망'}
-                    </h3>
-                  </div>
-                </div>
-                <Link href="#" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors hover:bg-amber-500 hover:text-black">
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            ))}
+      {/* Recent Columns Section */}
+      {recentColumns.length > 0 && (
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">최신 경제칼럼</h2>
+            <Link href="/featured-stocks" className="text-sm font-medium text-amber-500 hover:text-amber-400">
+              전체보기
+            </Link>
           </div>
-        </div>
-      </section>
+          <div className="rounded-2xl border border-white/10 bg-zinc-900/30 overflow-hidden">
+            <div className="divide-y divide-white/5">
+              {recentColumns.map((col) => (
+                <Link
+                  key={col.id}
+                  href={`/featured-stocks/${col.slug}`}
+                  className="flex items-center justify-between p-4 transition-colors hover:bg-white/5 sm:p-6 group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500">
+                          {col.category}
+                        </span>
+                        <span className="text-xs text-zinc-500">{formatDate(col.created_at)}</span>
+                      </div>
+                      <h3 className="mt-1 font-medium text-white group-hover:text-amber-400 transition-colors">
+                        {col.title}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 text-zinc-400 transition-colors group-hover:bg-amber-500 group-hover:text-black">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
